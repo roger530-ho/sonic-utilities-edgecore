@@ -146,7 +146,7 @@ def get_cmd_output(cmd):
 iface_alias_converter = lazy_object_proxy.Proxy(lambda: clicommon.InterfaceAliasConverter())
 
 #
-# Display all storm-control data 
+# Display all storm-control data
 #
 def display_storm_all():
     """ Show storm-control """
@@ -312,17 +312,21 @@ if is_gearbox_configured():
 # 'vrf' command ("show vrf")
 #
 
-def get_interface_bind_to_vrf(config_db, vrf_name):
-    """Get interfaces belong to vrf
+def get_interface_bind_to_vrf(config_db, vrf_name_list):
+    """Get all interfaces belong to all vrfs of vrf_name_list
     """
     tables = ['INTERFACE', 'PORTCHANNEL_INTERFACE', 'VLAN_INTERFACE', 'LOOPBACK_INTERFACE', 'VLAN_SUB_INTERFACE']
-    data = []
+    data = {}
     for table_name in tables:
         interface_dict = config_db.get_table(table_name)
         if interface_dict:
-            for interface in interface_dict:
-                if 'vrf_name' in interface_dict[interface] and vrf_name == interface_dict[interface]['vrf_name']:
-                    data.append(interface)
+            for vrf_name in vrf_name_list:
+                for interface in interface_dict:
+                    if 'vrf_name' in interface_dict[interface] and vrf_name == interface_dict[interface]['vrf_name']:
+                        if vrf_name in data:
+                            data[vrf_name].append(interface)
+                        else:
+                            data[vrf_name] = [interface]
     return data
 
 @cli.command()
@@ -340,12 +344,13 @@ def vrf(vrf_name):
             vrfs = list(vrf_dict.keys())
         elif vrf_name in vrf_dict:
             vrfs = [vrf_name]
+        intfs_dict = get_interface_bind_to_vrf(config_db, vrfs)
+        vrfs.sort()
         for vrf in vrfs:
-            intfs = get_interface_bind_to_vrf(config_db, vrf)
-            intfs = natsorted(intfs)
-            if len(intfs) == 0:
+            if vrf not in intfs_dict:
                 body.append([vrf, ""])
             else:
+                intfs = intfs_dict[vrf]
                 body.append([vrf, intfs[0]])
                 for intf in intfs[1:]:
                     body.append(["", intf])
@@ -444,7 +449,7 @@ def is_mgmt_vrf_enabled(ctx):
     return False
 
 #
-# 'storm-control' group 
+# 'storm-control' group
 # "show storm-control [interface <interface>]"
 #
 @cli.group('storm-control', invoke_without_command=True)
@@ -2094,7 +2099,7 @@ def summary(db):
             key_values = key.split('|')
             values = db.db.get_all(db.db.STATE_DB, key)
             if "local_discriminator" not in values.keys():
-                values["local_discriminator"] = "NA"            
+                values["local_discriminator"] = "NA"
             bfd_body.append([key_values[3], key_values[2], key_values[1], values["state"], values["type"], values["local_addr"],
                                 values["tx_interval"], values["rx_interval"], values["multiplier"], values["multihop"], values["local_discriminator"]])
 
@@ -2125,7 +2130,7 @@ def peer(db, peer_ip):
             key_values = key.split(delimiter)
             values = db.db.get_all(db.db.STATE_DB, key)
             if "local_discriminator" not in values.keys():
-                values["local_discriminator"] = "NA"            
+                values["local_discriminator"] = "NA"
             bfd_body.append([key_values[3], key_values[2], key_values[1], values.get("state"), values.get("type"), values.get("local_addr"),
                                 values.get("tx_interval"), values.get("rx_interval"), values.get("multiplier"), values.get("multihop"), values.get("local_discriminator")])
 
