@@ -351,6 +351,7 @@ def vrf(vrf_name):
                 body.append([vrf, ""])
             else:
                 intfs = intfs_dict[vrf]
+                intfs = natsorted(intfs)
                 body.append([vrf, intfs[0]])
                 for intf in intfs[1:]:
                     body.append(["", intf])
