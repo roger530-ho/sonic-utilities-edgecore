@@ -5350,8 +5350,11 @@ def enable_use_link_local_only(ctx, interface_name):
             ctx.fail("Interface name %s is invalid. Please enter a valid interface name!!" %(interface_name))
 
     if (interface_type == "VLAN_INTERFACE"):
-        if not clicommon.is_valid_vlan_interface(db, interface_name):
-            ctx.fail("Interface name %s is invalid. Please enter a valid interface name!!" %(interface_name))
+        if not clicommon.check_if_vlanid_exist(db, interface_name):
+            ctx.fail("Vlan: %s is invalid. Please create vlan first!!" %(interface_name))
+
+        if not clicommon.has_vlan_member(db, interface_name):
+            ctx.fail("Vlan: %s doesn't contains member. Please make sure vlan contains vlan member!" %(interface_name))
 
     portchannel_member_table = db.get_table('PORTCHANNEL_MEMBER')
 
