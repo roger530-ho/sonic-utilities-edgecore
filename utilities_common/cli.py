@@ -259,6 +259,13 @@ def check_if_vlanid_exist(config_db, vlan, table_name='VLAN'):
 
     return False
 
+def has_vlan_member(config_db, vlan):
+    vlan_ports_data = config_db.get_table('VLAN_MEMBER')
+    for key in vlan_ports_data:
+        if key[0] == vlan:
+            return True
+    return False
+
 def is_port_vlan_member(config_db, port, vlan):
     """Check if port is a member of vlan"""
 
