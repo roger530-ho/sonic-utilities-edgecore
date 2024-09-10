@@ -1474,8 +1474,12 @@ collect_broadcom() {
        save_bcmcmd_all_ns "\"fabric connectivity\"" "fabric.connect.summary"
        save_bcmcmd_all_ns "\"port status\"" "port.status.summary"
     else
-       save_bcmcmd_all_ns "\"l3 nat_ingress show\"" "broadcom.nat.ingress"
-       save_bcmcmd_all_ns "\"l3 nat_egress show\"" "broadcom.nat.egress"
+        local driver_id=$(bcmcmd "soc" | grep Driver= | awk -F '=' '{print substr($4, 1, 8)}')
+        # BCM56980, BCM56370 and BCM56275 do not support NAT feature
+        if [[ ! "$driver_id" =~ ^(BCM56980|BCM56370|BCM56275)$ ]]; then
+           save_cmd "bcmcmd \"l3 nat_ingress show\"" "broadcom.nat.ingress"
+           save_cmd "bcmcmd \"l3 nat_egress show\"" "broadcom.nat.egress"
+        fi
        save_bcmcmd_all_ns "\"ipmc table show\"" "broadcom.ipmc"
        save_bcmcmd_all_ns "\"multicast show\"" "broadcom.multicast"
        save_bcmcmd_all_ns "\"conf show\"" "conf.summary"
